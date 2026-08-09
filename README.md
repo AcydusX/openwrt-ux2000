@@ -195,6 +195,19 @@ LuCI at http://192.168.8.1.
   RM500U-CNV, which is the board's intended module and drives voice over
   VoLTE/IMS. It is harmless without a SIM/IMS-registered module.
 
+## References
+
+- **RM500U-CNV module wiki (Waveshare)** — M.2 B-KEY form factor, USB 3.1,
+  MBIM/RNDIS/ECM modes, OpenWrt usage, common AT commands, dual-SIM:
+  <https://www.waveshare.com/wiki/RM500U-CNV>
+- **RM500U-CN / RG500U-CN AT command manual (PDF)** — authoritative AT
+  reference (usbnet modes, `AT+CFUN`, `AT+QSLIC`, `AT+QCFG`, band/tower
+  lock, IMEI, etc.):
+  <https://files.waveshare.com/upload/c/cf/RG500U-CN_AT_command.pdf>
+- **U-Boot source (DragonBluep)** — the replacement bootloader used on this
+  device (single 32 MB firmware MTD layout):
+  <https://github.com/DragonBluep/uboot-mt7621>
+
 ## License
 
 OpenWrt and its packages are under their respective licenses (mostly GPL-2.0).
