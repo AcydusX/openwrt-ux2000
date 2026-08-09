@@ -136,7 +136,7 @@ uci commit network
 ifup wwan
 ```
 
-AT commands (IMEI, band/tower lock, mode) are for **manual** tuning only
+AT commands (band/tower lock, network mode) are for **manual** tuning only
 in picocom — keep them out of any automated path.
 
 ## Repository layout
@@ -271,7 +271,7 @@ LuCI at http://192.168.8.1.
   <https://www.waveshare.com/wiki/RM500U-CNV>
 - **RM500U-CN / RG500U-CN AT command manual (PDF)** — authoritative AT
   reference (usbnet modes, `AT+CFUN`, `AT+QSLIC`, `AT+QCFG`, band/tower
-  lock, IMEI, etc.):
+  lock, network mode, etc.):
   <https://files.waveshare.com/upload/c/cf/RG500U-CN_AT_command.pdf>
 - **U-Boot source (DragonBluep)** — the replacement bootloader used on this
   device (single 32 MB firmware MTD layout):
