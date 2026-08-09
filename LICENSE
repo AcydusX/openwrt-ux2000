@@ -1,0 +1,32 @@
+                    GNU GENERAL PUBLIC LICENSE
+                       Version 2, June 1991
+
+ Copyright (C) 1989, 1991 Free Software Foundation, Inc.,
+ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
+ Everyone is permitted to copy and distribute verbatim copies
+ of this license document, but changing it is not allowed.
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License version 2 as
+published by the Free Software Foundation.
+
+The device-support files in this repository (DTS, image definition,
+package Makefile, uci-defaults, build helper, documentation) are
+licensed under the GNU General Public License v2.0, unless a file
+carries its own SPDX-License-Identifier or copyright header stating
+otherwise.
+
+Note on bundled third-party material:
+
+- The U-Boot binaries under bootloader/ are built from
+  https://github.com/DragonBluep/uboot-mt7621 (U-Boot 2018.09, GPL-2.0).
+  Their complete corresponding source is available from that repository.
+- The OpenWrt packages pulled in by this overlay are each under their
+  own respective licenses (mostly GPL-2.0); see the OpenWrt tree.
+- Brand and product names (FiberHome, DITO, Quectel, MediaTek, Waveshare,
+  DragonBluep) are used here only to identify the hardware this software
+  supports. This project is not affiliated with, endorsed by, or
+  sponsored by any of those companies.
+
+The full text of the GNU General Public License version 2 is available at:
+https://www.gnu.org/licenses/old-licenses/gpl-2.0.html

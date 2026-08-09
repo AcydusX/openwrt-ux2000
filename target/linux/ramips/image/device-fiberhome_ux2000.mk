@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# FiberHome UX2000 image device block (append to mt7621.mk)
 define Device/fiberhome_ux2000
   $(Device/dsa-migration)
   $(Device/uimage-lzma-loader)

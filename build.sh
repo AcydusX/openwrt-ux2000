@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-only
 # build.sh - sync the UX2000 overlay into an OpenWrt tree and build it.
 #
 # Run this from INSIDE a checked-out OpenWrt 25.12 source tree:

@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
 # UX2000 — first-boot network / WiFi defaults. Runs once at first boot
 # (uci-defaults self-deletes), so a config-reset ("sysupgrade -n") flash
 # still comes up with WiFi enabled and the operator's test LAN IP.

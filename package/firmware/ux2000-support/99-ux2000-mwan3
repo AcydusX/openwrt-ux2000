@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-only
 # 99-ux2000-mwan3 - multi-WAN failover defaults for the FiberHome UX2000.
 #
 # Two members:

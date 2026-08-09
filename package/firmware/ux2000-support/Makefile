@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# FiberHome UX2000 support meta-package
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/kernel.mk
 

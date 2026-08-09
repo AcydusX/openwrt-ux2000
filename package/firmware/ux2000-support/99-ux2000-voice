@@ -1,4 +1,5 @@
 #!/bin/sh /etc/rc.common
+# SPDX-License-Identifier: GPL-2.0-only
 # ux2000-voice - bring up the RJ11 FXS line on the RM500U-CNV (LE9643 SLIC) at boot.
 #
 # Background (see VOICE.md):

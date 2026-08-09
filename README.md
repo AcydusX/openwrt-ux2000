@@ -13,6 +13,9 @@ stock OpenWrt 25.12 source tree into a flashable UX2000 image.
 ## Hardware
 
 ![FiberHome UX2000 (DITO HOME branded)](docs/device-photo.png)
+*Photo: retail unit, shown for hardware identification only. "DITO HOME" /
+FiberHome / Quectel are trademarks of their respective owners; this project
+is not affiliated with or endorsed by them.*
 
 The unit ships as the **DITO HOME** CPE — a FiberHome UX2000 with an
 internal **M.2 RM500U-CNV** 5G modem (the card discussed throughout this
@@ -195,6 +198,18 @@ cd /path/to/openwrt
 ```
 
 ## Flashing
+
+> ⚠️ **Bootloader requirement — read first.**
+> This image targets the **DragonBluep U-Boot** MTD layout (single 32 MB
+> `firmware` partition: `192k(u-boot),64k(u-boot-env),64k(factory),-(firmware)`).
+> It will **only work on a unit already running that bootloader**. The stock
+> FiberHome/DITO U-Boot uses a different (A/B) MTD map, and flashing this
+> image onto it (or onto a unit whose bootloader was wiped) can **brick the
+> device**. The `sysupgrade` image does **not** touch the bootloader
+> partition — you must already be on DragonBluep U-Boot (see
+> [`bootloader/`](bootloader/README.md) for the recovery/build artifacts).
+> Only flash if you know your unit's bootloader state and have a UART/SPI
+> recovery path.
 
 Via running OpenWrt (sysupgrade, **no settings kept** — the `-n` matters
 because the WiFi/network uci-defaults only run on a clean flash):
