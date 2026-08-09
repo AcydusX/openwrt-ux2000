@@ -91,12 +91,12 @@ First-boot uci-defaults (run once, then self-delete):
 
 ## Cellular
 
-The UX2000 has a USB cellular slot. This image is **modem-agnostic**: it
-ships the kernel/modules and userspace tools to support a wide range of
-USB cellular modems, but deliberately **does not pin a specific card or
-ship a card-specific init script**. Drop in any compatible module
-(MBIM/QMI/NCM/CDC-ECM/RNDIS), and the builder wires up the `wwan`
-interface their own way.
+The UX2000 has an **M.2 (NGFF) cellular slot** (B-key, USB3 to the SoC).
+This image is **modem-agnostic**: it ships the kernel modules and userspace
+tools to support a wide range of M.2 cellular modems, but deliberately does
+not pin a specific card or ship a card-specific init script. Drop in any
+compatible module (MBIM/QMI/NCM/CDC-ECM/RNDIS), and the builder wires up
+the `wwan` interface their own way.
 
 > ⚠️ **WARNING — no turnkey cellular support.**
 > This image ships the packages but **not** the interface logic for whatever
