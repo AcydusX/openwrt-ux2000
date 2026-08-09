@@ -71,6 +71,16 @@ ship a card-specific init script**. Drop in any compatible module
 (MBIM/QMI/NCM/CDC-ECM/RNDIS), and the builder wires up the `wwan`
 interface their own way.
 
+> ⚠️ **WARNING — no turnkey cellular support.**
+> This image ships the packages but **not** the interface logic for whatever
+> modem you install. It does **not** auto-bring-up the cellular connection.
+> Using the installed modem therefore requires you to **build your own
+> `wwan` interface / bring-up** (define `network.wwan` with the right proto,
+> APN, radio-on method, etc.). Only proceed if you know how to interface
+> WWAN cards under OpenWrt — otherwise the modem slot will simply do nothing
+> out of the box. The board's reference module is the RM500U-CNV, which this
+> repo documents, but the bring-up is still left to you.
+
 Packages included for cellular support:
 - **MBIM**: `libmbim`, `umbim`, `mbim-utils` (provides `mbimcli`),
   `kmod-usb-net-cdc-mbim`, `kmod-usb-wdm`
