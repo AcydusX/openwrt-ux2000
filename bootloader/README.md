@@ -2,8 +2,9 @@
 
 This directory holds the **replacement U-Boot** used on the UX2000 in this
 project. The stock bootloader's MTD layout was **A/B (dual-slot) style**;
-this build — a **DragonBluep U-Boot 2018.09** variant, contributed to the
-*dragonp* project — **restructures the flash into a single 32 MB firmware
+this build — a **DragonBluep U-Boot 2018.09** variant (from the
+`DragonBluep/uboot-mt7621` repository, MTK U-Boot with Failsafe Mode) —
+**restructures the flash into a single 32 MB firmware
 partition**, which is what the OpenWrt image in this repo targets.
 
 > ⚠️ **WARNING**: the stock U-Boot was accidentally wiped from the UX2000's
@@ -60,8 +61,8 @@ partition** in this layout.
 
 ## Source
 
-The U-Boot source is **https://github.com/DragonBluep/uboot-mt7621**
-("MTK U-Boot (MT7621) v2018.09 Build Customized u-boot Online", branch
-`main`). This directory keeps only the built artifacts + defconfig for
-archival/reflashing. The `mt7621_defconfig` here corresponds to that
-project's `mt7621_defconfig`.
+The U-Boot source is **DragonBluep's `uboot-mt7621` repository** —
+<https://github.com/DragonBluep/uboot-mt7621> ("MediaTek MT7621 U-Boot
+with Failsafe Mode", by Shiji Yang / sanshian, GPL-2.0). This directory
+keeps only the built artifacts + defconfig for archival/reflashing. The
+`mt7621_defconfig` here corresponds to that repository's `mt7621_defconfig`.
