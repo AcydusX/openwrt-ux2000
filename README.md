@@ -146,9 +146,6 @@ uci commit network
 ifup wwan
 ```
 
-AT commands (band/tower lock, network mode) are for **manual** tuning only
-in picocom — keep them out of any automated path.
-
 ## Repository layout
 
 ```
