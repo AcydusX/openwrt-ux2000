@@ -55,9 +55,16 @@ labels map to the OpenWrt LED sysfs names used by the device tree:
 | Bootloader | DragonBluep U-Boot 2018.09 |
 
 ### Ethernet / switch layout (DSA)
-- `lan1`..`lan4` — LAN switch ports
-- `wan` — uplink (DHCP client by default)
-- `wwan` — cellular interface (created manually / by your own init script)
+
+The MT7530 switch has **4 physical RJ45 ports** (no separate 5th WAN port):
+- `lan1` — **physical LAN1 port = the WAN/uplink** (DHCP client by default). It is
+  also the **fallback/backup** path referred to as `wan` in the mwan3 config.
+- `lan2`..`lan4` — LAN switch ports
+
+The DSA port labels are wired opposite to the silkscreen in the device tree
+(`lan1` = physical LAN1/WAN, `lan4` = physical LAN4), so the names match the
+case marking. The `wwan` cellular interface is created separately (manually
+or by your own init script) and is not one of the RJ45 ports.
 
 ### Partition map (DragonBluep U-Boot)
 ```
