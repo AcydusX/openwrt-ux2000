@@ -12,7 +12,7 @@
 #  - The line only energizes once the module is on-network with IMS ready
 #    (AT+CIREG? -> 1,1). Voice rides VoLTE, not a router-side SIP daemon.
 #
-# AT port on the RM500U-CNV is /dev/ttyUSB2 @ 115200 (NOT ttyUSB1 like EC200A).
+# AT port on the RM500U-CNV is /dev/ttyUSB2 @ 115200.
 # This script only sends SLIC setup; it does NOT touch the MBIM data link.
 
 START=99

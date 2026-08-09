@@ -60,7 +60,7 @@ First-boot uci-defaults (run once, then self-delete):
 - `99-ux2000-network` — LAN `192.168.8.1/24`, enables **both** WiFi radios *and*
   AP interfaces (OpenWrt leaves them disabled on a config reset), sets default APN
 - `99-ux2000-mwan3` — `wan` = primary (metric 1), `wwan` = cellular backup (metric 2)
-- `99-ux2000-voice` — SLIC/FXS enable (legacy EC200A-era; harmless if no voice module fitted)
+- `99-ux2000-voice` — SLIC/FXS enable for the RM500U-CNV (board is built for this card; it drives the RJ11 line). Harmless if no SIM/IMS.
 
 ## Cellular
 
@@ -191,10 +191,9 @@ LuCI at http://192.168.8.1.
 - **WSL PATH bug**: Windows `C:\Program Files\WireGuard` leaks into `$PATH`
   and breaks OpenWrt's `find -execdir`. Prefix every `make` with the clean
   `PATH` shown above.
-- **DITO (PH) is SA-only**: in NSA mode `--connect` fails with
-  `PacketServiceDetached`. Set the modem to SA (or LTE) first.
-- The `99-ux2000-voice` (SLIC) script is legacy EC200A-era; it is harmless
-  on the RM500U but does not drive voice on this module.
+- The `99-ux2000-voice` (SLIC/FXS) script enables the RJ11 line via the
+  RM500U-CNV, which is the board's intended module and drives voice over
+  VoLTE/IMS. It is harmless without a SIM/IMS-registered module.
 
 ## License
 
