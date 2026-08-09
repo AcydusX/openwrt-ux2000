@@ -21,15 +21,18 @@ stock OpenWrt 25.12 source tree into a flashable UX2000 image.
 
 ## Hardware
 
-![FiberHome UX2000 (DITO HOME branded)](docs/device-photo.png)
-*Photo: retail unit, shown for hardware identification only. "DITO HOME" /
-FiberHome / Quectel are trademarks of their respective owners; this project
-is not affiliated with or endorsed by them.*
+![FiberHome UX2000 (DITO HOME branded, hardware-modified)](docs/device-photo.png)
+*Photo: a **modified** unit (4 SMA antenna ports added) shown for hardware
+identification only — not a stock retail device. "DITO HOME" / FiberHome /
+Quectel are trademarks of their respective owners; this project is not
+affiliated with or endorsed by them.*
 
-The unit ships as the **DITO HOME** CPE — a FiberHome UX2000 with an
-internal **M.2 RM500U-CNV** 5G modem (the card discussed throughout this
-repo). The front-panel indicator row labels map to the OpenWrt LED sysfs
-names used by the device tree:
+The stock device ships as the **DITO HOME** CPE — a FiberHome UX2000 with
+an internal **M.2 RM500U-CNV** 5G modem (the card discussed throughout this
+repo). The unit **pictured above is a hardware-modified example** (4 SMA
+antenna ports were added); the software in this repo targets the UX2000
+board regardless of such external mods. The front-panel indicator row
+labels map to the OpenWrt LED sysfs names used by the device tree:
 
 | Front label | Meaning | OpenWrt LED (`/sys/class/leds/`) |
 |---|---|---|
