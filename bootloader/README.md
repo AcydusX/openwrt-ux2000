@@ -59,6 +59,33 @@ partition** in this layout.
   interactive countdown by default — recovery is via the web UI / button, or
   a UART serial console.
 
+## Rebuilding via the online builder
+
+The `DragonBluep/uboot-mt7621` repo offers a GitHub Actions **"Build
+customized u-boot"** workflow, so you can regenerate `u-boot-mt7621.bin`
+without a local toolchain. To reproduce **this** build (the single-32 MB
+firmware layout), fork the repo, open **Actions → Build customized
+u-boot → Run workflow**, and set:
+
+| Parameter | Value |
+|---|---|
+| Flash Type | **NOR Flash** |
+| MTD Partition Table | `192k(u-boot),64k(u-boot-env),64k(factory),-(firmware)` |
+| Kernel Load Address | `0x50000` (sum of all partitions before `firmware`: 192k+64k+64k) |
+| Reset Button GPIO | `19` (from the UX2000 DTS `reset-gpios = <&gpio 19 …>`; leave unset if you do not need button-failsafe) |
+| System LED GPIO | `6` (orange:status) or `7` (green:status) — the board's status LED |
+| CPU Frequency | `880` (MHz) |
+| DRAM Frequency | `1200` (MT/s, DDR3) |
+| Baud Rate | `115200` |
+
+The resulting `u-boot-mt7621.bin` is what you flash to the `u-boot` MTD
+partition. The web-recovery / TFTP failsafe described above is built in
+when the button/LED GPIOs are set.
+
+> Note: the `mt7621_defconfig` archived in this directory is the saved
+> config for the binary we used; the workflow above is the reproducible
+> path if you need to rebuild from source.
+
 ## Source
 
 The U-Boot source is **DragonBluep's `uboot-mt7621` repository** —
