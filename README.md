@@ -12,6 +12,21 @@ stock OpenWrt 25.12 source tree into a flashable UX2000 image.
 
 ## Hardware
 
+![FiberHome UX2000 (DITO HOME branded)](docs/device-photo.png)
+
+The unit ships as the **DITO HOME** CPE — a FiberHome UX2000 with an
+internal **M.2 RM500U-CNV** 5G modem (the card discussed throughout this
+repo). The front-panel indicator row labels map to the OpenWrt LED sysfs
+names used by the device tree:
+
+| Front label | Meaning | OpenWrt LED (`/sys/class/leds/`) |
+|---|---|---|
+| `SYS` | System / power | `orange:status` / `green:status` |
+| `NET` | Internet / WAN up | `green:net` (green) + `blue:net` (blue) |
+| `RF` | Cellular signal strength | `green:signal1`..`green:signal4` |
+| `2.4GHz` / `5GHz` | WiFi radios | MT7615 DBDC phys (`phy0` 2.4G, `phy1` 5G) |
+| `LINE` | RJ11 FXS / VoLTE | `green:volte` |
+
 | | |
 |---|---|
 | SoC | MediaTek MT7621A (880 MHz, dual-core) |
