@@ -1,0 +1,12 @@
+# Build artifacts (produced by `make`, not committed)
+/bin/
+/build_dir/
+/staging_dir/
+/tmp/
+/logs/
+*.o
+*.ko
+*.cmd
+*~
+.#.swp
+.DS_Store

@@ -1,0 +1,49 @@
+#!/bin/sh /etc/rc.common
+# ux2000-voice - bring up the RJ11 FXS line on the RM500U-CNV (LE9643 SLIC) at boot.
+#
+# Background (see VOICE.md):
+#  - The UX2000 board carries an external LE9643 SLIC, driven by the cellular
+#    module over PCM/I2S + control. The module is the ONLY SLIC controller.
+#  - This unit now has the original RM500U-CNV (firmware RM500UCNVAAR03A02M2G_01.001.01.001).
+#  - Stock firmware init sequence (recovered from supercmd):
+#        AT+QSLIC=1,3            (enable SLIC, type 3 = LE9643)
+#        at+qaudcfg="slic_IndRep",1   (enable hook/DTMF/flash reporting)
+#        at+qaudcfg="slic/LF_Ring",0  (FORWARD ACTIVE: line powered, dial tone on off-hook)
+#  - The line only energizes once the module is on-network with IMS ready
+#    (AT+CIREG? -> 1,1). Voice rides VoLTE, not a router-side SIP daemon.
+#
+# AT port on the RM500U-CNV is /dev/ttyUSB2 @ 115200 (NOT ttyUSB1 like EC200A).
+# This script only sends SLIC setup; it does NOT touch the MBIM data link.
+
+START=99
+AT_PORT=/dev/ttyUSB2
+BAUD=115200
+
+at_send() {
+    printf '%s\r' "$1" > "$AT_PORT"
+    sleep 1
+}
+
+start() {
+    # wait for the AT port to appear (modem enumerates after boot)
+    i=0
+    while [ $i -lt 45 ]; do
+        [ -c "$AT_PORT" ] && break
+        sleep 2; i=$((i+1))
+    done
+    [ -c "$AT_PORT" ] || { logger -t ux2000-voice "no AT port ($AT_PORT); SLIC not enabled"; exit 0; }
+
+    # Enable the LE9643 SLIC (type 3) and hook-event reporting.
+    at_send "AT+QSLIC=1,3"
+    at_send "at+qaudcfg=\"slic_IndRep\",1"
+    # FORWARD ACTIVE: line powered, dial tone on off-hook, hook detect enabled.
+    at_send "at+qaudcfg=\"slic/LF_Ring\",0"
+    logger -t ux2000-voice "RM500U-CNV SLIC enabled (type 3), line in FORWARD ACTIVE"
+}
+
+stop() {
+    [ -c "$AT_PORT" ] || exit 0
+    at_send "at+qaudcfg=\"slic/LF_Ring\",0"
+    at_send "AT+QSLIC=0,3"
+    logger -t ux2000-voice "SLIC disabled"
+}

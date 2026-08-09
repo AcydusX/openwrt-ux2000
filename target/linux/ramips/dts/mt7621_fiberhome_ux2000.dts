@@ -1,0 +1,343 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+// FiberHome UX2000 (OEM DITO UX2000_CNV) - MT7621AT + Quectel RM500U-CNV (USB 5G)
+// Ported from the stock 18.06-era vendor firmware to kernel 6.12 (OpenWrt 25.12).
+//
+// Wi-Fi: ONE MediaTek MT7615 (DBDC) on PCIe port 0 provides BOTH bands.
+//   Stock bootlog: RTMPInitPCIeDevice():device_id=0x7615, DBDC Mode=1,
+//   Band0 = ch1 2x2 (2.4 GHz), Band1 = ch36 2x2 (5 GHz).
+//   There is NO MT7603 and NO MT7662 on this board; PCIe ports 1 and 2 are
+//   physically unpopulated ("PCIe port 1/2 link down" in the stock log).
+//   EEPROM lives at Factory offset 0x0 (1024 bytes). Byte 0x3e = 0x30, so
+//   MT_EE_NIC_WIFI_CONF_BAND_SEL == 3 == MT_EE_DBDC, which makes mt7615e set
+//   dbdc_support and register the second (5 GHz) phy from the same chip.
+
+/dts-v1/;
+
+#include "mt7621.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+
+/ {
+	compatible = "fiberhome,ux2000", "mediatek,mt7621-soc";
+	model = "FiberHome UX2000";
+
+	aliases {
+		led-boot        = &led_status_green;
+		led-failsafe    = &led_status_orange;
+		led-running     = &led_status_green;
+		led-upgrade     = &led_status_orange;
+		label-mac-device = &gmac0;
+	};
+
+	chosen {
+		bootargs = "console=ttyS0,115200";
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		reset {
+			label = "reset";
+			gpios = <&gpio 8 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_RESTART>;
+		};
+
+		wps {
+			label = "wps";
+			gpios = <&gpio 18 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_WPS_BUTTON>;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		/* Power LED is a single bi-color LED. Verified by GPIO dump:
+		 *   gpio6 = ORANGE element (clear/low = on)
+		 *   gpio7 = GREEN  element (clear/low = on)
+		 * Both are active-low. Original DTS had these swapped, so the
+		 * green-labeled node drove the orange element -> the box booted
+		 * with an orange power LED. Green now carries the running/boot
+		 * alias and lights at power-on; orange is used for
+		 * failsafe/upgrade only.
+		 */
+		led_status_green: status_green {
+			label = "green:status";
+			gpios = <&gpio 7 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+		};
+
+		led_status_orange: status_orange {
+			label = "orange:status";
+			gpios = <&gpio 6 GPIO_ACTIVE_LOW>;
+		};
+
+		led_net_green: net_green {
+			label = "green:net";
+			gpios = <&gpio 10 GPIO_ACTIVE_LOW>;
+		};
+
+		led_net_blue: net_blue {
+			label = "blue:net";
+			gpios = <&gpio 12 GPIO_ACTIVE_LOW>;
+		};
+
+		/* RF signal-strength bars. Verified ordering from GPIO dump
+		 * (clear = LED on): gpio47 = 1st bar ... gpio43 = 4th bar,
+		 * gpio48 = voLTE/voNR indicator.
+		 */
+		led_signal0 {
+			label = "green:signal1";
+			gpios = <&gpio 47 GPIO_ACTIVE_LOW>;
+		};
+
+		led_signal1 {
+			label = "green:signal2";
+			gpios = <&gpio 46 GPIO_ACTIVE_LOW>;
+		};
+
+		led_signal2 {
+			label = "green:signal3";
+			gpios = <&gpio 45 GPIO_ACTIVE_LOW>;
+		};
+
+		led_signal3 {
+			label = "green:signal4";
+			gpios = <&gpio 43 GPIO_ACTIVE_LOW>;
+		};
+
+		led_line {
+			label = "green:volte";
+			gpios = <&gpio 48 GPIO_ACTIVE_LOW>;
+		};
+	};
+
+	// Modem control lines (Quectel RM500U). Exposed as /sys/class/gpio exports
+	// via the gpio-export driver (hack-6.12/800-... patch).
+	// Stock DTS encodes all three with flag 0x0 == GPIO_ACTIVE_HIGH.
+	gpio-export {
+		compatible = "gpio-export";
+		#size-cells = <0>;
+
+		modem_powersupply {
+			gpio-export,name = "modem_powersupply";
+			gpio-export,output = <1>;
+			gpios = <&gpio 4 GPIO_ACTIVE_HIGH>;
+		};
+
+		modem_poweron {
+			gpio-export,name = "modem_poweron";
+			gpio-export,output = <1>;
+			gpios = <&gpio 16 GPIO_ACTIVE_HIGH>;
+		};
+
+		modem_reset {
+			gpio-export,name = "modem_reset";
+			gpio-export,output = <0>;
+			gpios = <&gpio 14 GPIO_ACTIVE_HIGH>;
+		};
+	};
+};
+
+&spi0 {
+	status = "okay";
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <50000000>;
+		m25p,fast-read;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "u-boot";
+				reg = <0x00000 0x30000>;
+				read-only;
+			};
+
+			partition@30000 {
+				label = "u-boot-env";
+				reg = <0x30000 0x10000>;
+			};
+
+			/* NOTE: the DragonBluep U-Boot in use declares
+			 *   mtdparts=raspi:192k(u-boot),64k(u-boot-env),64k(factory),-(firmware)
+			 * so factory is 64k (NOT the stock 128k) and firmware starts
+			 * at 0x50000. These MUST match the bootloader or U-Boot writes
+			 * the image somewhere the kernel does not look.
+			 */
+			factory: partition@40000 {
+				label = "factory";
+				reg = <0x40000 0x10000>;
+				/* NOT marked read-only: MTD enforces that flag in the
+				 * kernel and even "mtd -f write" cannot override it,
+				 * which makes restoring calibration data impossible
+				 * on-device. Keep it writable so the EEPROM/MAC region
+				 * can be reflashed if it is ever erased.
+				 */
+
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					/* MT7615 EEPROM cell MUST be >= MT7615_EEPROM_FULL_SIZE
+					 * (18176 = 0x4700), NOT MT7615_EEPROM_SIZE (0x400).
+					 * mt7615_eeprom_load() calls
+					 *   mt76_eeprom_init(dev, MT7615_EEPROM_FULL_SIZE)
+					 * and mt76_get_of_data_from_nvmem() rejects the cell
+					 * with -EINVAL when "retlen < len". A 0x400 cell is
+					 * silently dropped, the driver falls back to efuse
+					 * defaults, dbdc_support is never set, and you get a
+					 * single phy0 carrying both bands instead of
+					 * phy0 (2.4G) + phy1 (5G).
+					 * 0x4da8 matches mt7621_zyxel_lte3301-plus.dts, which
+					 * is the same single-MT7615-DBDC topology.
+					 */
+					eeprom_factory_0: eeprom@0 {
+						reg = <0x0 0x4da8>;
+					};
+
+					macaddr_factory_e000: macaddr@e000 {
+						reg = <0xe000 0x6>;
+					};
+
+					macaddr_factory_e006: macaddr@e006 {
+						reg = <0xe006 0x6>;
+					};
+				};
+			};
+
+			/* firmware starts at 0x50000 to match the bootloader's
+			 * "-(firmware)" (rest of a 32 MiB chip) = 0x1FB0000.
+			 * There is no separate "config" partition in this map.
+			 *
+			 * The image is built as a LEGACY uImage
+			 * ("KERNEL := ... | uImage none"), so the splitter must be
+			 * denx,uimage. With denx,fit the FIT splitter scans for an
+			 * FDT magic, latches onto the DTB that append-dtb glued to
+			 * the kernel, and then reports
+			 *   "no rootfs found after FIT image"
+			 * -> VFS panic, unable to mount root.
+			 */
+			partition@50000 {
+				label = "firmware";
+				reg = <0x50000 0x01FB0000>;
+				compatible = "denx,uimage";
+			};
+
+		};
+	};
+};
+
+&ethernet {
+	status = "okay";
+	pinctrl-0 = <&mdio_pins>, <&rgmii1_pins>;
+};
+
+&gmac0 {
+	phy-mode = "trgmii";
+	nvmem-cells = <&macaddr_factory_e000>;
+	nvmem-cell-names = "mac-address";
+
+	fixed-link {
+		speed = <1000>;
+		full-duplex;
+		pause;
+	};
+};
+
+&switch0 {
+	mediatek,mcm;
+
+	ports {
+		/* The MT7530 PHY indices are wired OPPOSITE to the silkscreen.
+		 * Confirmed by the user's LuCI screenshot: OpenWrt "lan1" is
+		 * the physical LAN4 port, and OpenWrt "lan4" is the physical
+		 * LAN1 port (the WAN). The user wants the names swapped so the
+		 * DSA label matches the silkscreen: port@3 (physical LAN1) ->
+		 * lan1 (and is the WAN), port@0 (physical LAN4) -> lan4.
+		 */
+		port@0 {
+			status = "okay";
+			label = "lan4";
+		};
+
+		port@1 {
+			status = "okay";
+			label = "lan3";
+		};
+
+		port@2 {
+			status = "okay";
+			label = "lan2";
+		};
+
+		port@3 {
+			status = "okay";
+			label = "lan1";   /* physical LAN1 = WAN port */
+		};
+
+		port@6 {
+			reg = <6>;
+			ethernet = <&gmac0>;
+			phy-mode = "trgmii";
+
+			fixed-link {
+				speed = <1000>;
+				full-duplex;
+				pause;
+			};
+		};
+	};
+};
+
+&pcie {
+	status = "okay";
+	/* Stock DTS: reset-gpios = <&gpio 0x13 GPIO_ACTIVE_LOW> == GPIO 19,
+	 * which is also the mt7621.dtsi default. (0x13 is hex, not decimal 13.)
+	 */
+	reset-gpios = <&gpio 19 GPIO_ACTIVE_LOW>;
+};
+
+/* Single MT7615 in DBDC mode: one PCIe endpoint, two phys (2.4 + 5 GHz).
+ * Do NOT add ieee80211-freq-limit here - it would clamp the chip to one band
+ * and kill the DBDC second phy.
+ */
+&pcie0 {
+	wifi@0,0 {
+		compatible = "mediatek,mt76";
+		reg = <0x0000 0 0 0 0>;
+		/* Only the "eeprom" cell is supplied. The stock EEPROM already
+		 * carries the dedicated WiFi MAC at offset 0x0004
+		 * (00:1e:a8:a1:15:a0), which mt76 reads itself. Passing a
+		 * "mac-address" cell pointing at factory 0xe000 would override
+		 * it with the ETHERNET MAC, making both APs share the eth0
+		 * BSSID.
+		 */
+		nvmem-cells = <&eeprom_factory_0>;
+		nvmem-cell-names = "eeprom";
+	};
+};
+
+&xhci {
+	status = "okay";
+};
+
+/* NOTE: &sdhci is intentionally left disabled (as in the stock DTS).
+ * The MT7621 "sdhci" pin group covers pins 41-48, which this board wires to
+ * the signal/line LEDs (GPIO 43,45,46,47,48). Enabling the SD controller
+ * steals those pins and the LEDs stop working.
+ */
+
+&state_default {
+	gpio {
+		groups = "i2c", "uart2", "uart3", "rgmii2", "sdhci", "jtag", "wdt";
+		function = "gpio";
+	};
+};

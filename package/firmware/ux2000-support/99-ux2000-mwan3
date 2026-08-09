@@ -1,0 +1,72 @@
+#!/bin/sh
+# 99-ux2000-mwan3 - multi-WAN failover defaults for the FiberHome UX2000.
+#
+# Two members:
+#   wan  : wired Ethernet on lan1 (primary, lower metric)
+#   wwan : Quectel RM500U-CNV cellular (backup)
+#
+# mwan3 owns policy routing so LAN clients use the wired link when it is
+# healthy and transparently fail over to cellular on loss of connectivity.
+# This is failover only; true PDN/upstream bonding is a separate, later step.
+#
+# Runs once at first boot (uci-defaults self-deletes).
+
+. /lib/functions.sh
+
+# Guard: only configure if mwan3 is installed and not already set up.
+command -v mwan3 >/dev/null 2>&1 || exit 0
+uci -q get mwan3.wan >/dev/null 2>&1 && exit 0
+
+# --- interfaces ---
+uci set mwan3.wan=interface
+uci set mwan3.wan.enabled='1'
+uci set mwan3.wan.track_method='ping'
+uci set mwan3.wan.family='ipv4'
+uci set mwan3.wan.reliability='1'
+uci add_list mwan3.wan.track_ip='8.8.8.8'
+uci add_list mwan3.wan.track_ip='1.1.1.1'
+uci set mwan3.wan.timeout='4'
+uci set mwan3.wan.interval='10'
+uci set mwan3.wan.down='3'
+uci set mwan3.wan.up='5'
+
+uci set mwan3.wwan=interface
+uci set mwan3.wwan.enabled='1'
+uci set mwan3.wwan.track_method='ping'
+uci set mwan3.wwan.family='ipv4'
+uci set mwan3.wwan.reliability='1'
+uci add_list mwan3.wwan.track_ip='8.8.8.8'
+uci add_list mwan3.wwan.track_ip='1.1.1.1'
+uci set mwan3.wwan.timeout='4'
+uci set mwan3.wwan.interval='10'
+uci set mwan3.wwan.down='3'
+uci set mwan3.wwan.up='5'
+
+# --- members (metrics: wired preferred) ---
+uci set mwan3.wan_m1=member
+uci set mwan3.wan_m1.interface='wan'
+uci set mwan3.wan_m1.metric='1'
+uci set mwan3.wan_m1.weight='1'
+
+uci set mwan3.wwan_m2=member
+uci set mwan3.wwan_m2.interface='wwan'
+uci set mwan3.wwan_m2.metric='2'
+uci set mwan3.wwan_m2.weight='1'
+
+# --- policy: wan first, wwan as backup ---
+uci set mwan3.balanced=policy
+uci add_list mwan3.balanced.use_member='wan_m1'
+uci add_list mwan3.balanced.use_member='wwan_m2'
+
+uci set mwan3.strict_failover=policy
+uci add_list mwan3.strict_failover.use_member='wan_m1'
+uci add_list mwan3.strict_failover.use_member='wwan_m2'
+
+# --- rules: everything uses the failover policy ---
+uci set mwan3.default_rule=rule
+uci set mwan3.default_rule.dest_ip='0.0.0.0/0'
+uci set mwan3.default_rule.use_policy='strict_failover'
+
+uci commit mwan3
+logger -t ux2000-mwan3 "configured wan(primary)/wwan(backup) failover"
+exit 0

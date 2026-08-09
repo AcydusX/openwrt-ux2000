@@ -1,0 +1,36 @@
+#!/bin/sh
+# UX2000 — first-boot network / WiFi defaults. Runs once at first boot
+# (uci-defaults self-deletes), so a config-reset ("sysupgrade -n") flash
+# still comes up with WiFi enabled and the operator's test LAN IP.
+#
+# Without this, a -n flash leaves OpenWrt's freshly-generated
+# /etc/config/wireless with every wifi-device disabled, so no APs broadcast.
+
+# Regenerate /etc/config/wireless from the detected MT7615 DBDC radios if it
+# is missing or empty (harmless if already present).
+wifi config >/dev/null 2>&1
+
+# Enable every wifi-device and wifi-iface section (OpenWrt leaves both
+# disabled on a config reset, so no APs would broadcast).
+i=0
+while uci -q get wireless.@wifi-device[$i] >/dev/null 2>&1; do
+	uci set wireless.@wifi-device[$i].disabled=0
+	i=$((i+1))
+done
+i=0
+while uci -q get wireless.@wifi-iface[$i] >/dev/null 2>&1; do
+	uci set wireless.@wifi-iface[$i].disabled=0
+	i=$((i+1))
+done
+uci commit wireless
+
+# Use the operator's test subnet so LuCI is reachable right after a -n flash.
+uci set network.lan.ipaddr='192.168.8.1'
+uci set network.lan.netmask='255.255.255.0'
+uci commit network
+
+# Default cellular APN (DITO). Override via: uci set ux2000.modem.apn=...
+uci -q get ux2000.modem.apn >/dev/null 2>&1 || uci set ux2000.modem.apn='internet'
+uci commit ux2000
+
+exit 0
