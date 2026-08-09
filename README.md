@@ -6,8 +6,9 @@ definition, firmware meta-package, and first-boot uci-defaults) that turns a
 stock OpenWrt 25.12 source tree into a flashable UX2000 image.
 
 > Status: builds and flashes. LAN + WiFi (MT7615 DBDC) + LuCI + multi-WAN
-> (mwan3) are working. The cellular (RM500U-CNV, MBIM) **data interface
-> bring-up is not automated in this image** — see [Cellular](#cellular) below.
+> (mwan3) are working. The cellular **data interface bring-up is not
+> automated** in this image (module-agnostic by design) — see
+> [Cellular](#cellular) below.
 
 ## Hardware
 
@@ -18,7 +19,7 @@ stock OpenWrt 25.12 source tree into a flashable UX2000 image.
 | Flash | 32 MB SPI-NOR |
 | Switch | MT7530 (5× GE, DSA) |
 | WiFi | MediaTek MT7615 DBDC (2.4 GHz + 5 GHz) |
-| Modem | Quectel **RM500U-CNV** (5G, USB3, **MBIM-only**) |
+| Modem | M.2 (NGFF) cellular slot — module-agnostic; ships support packages, builder supplies the card + interface |
 | LEDs | status (orange/green), net (green/blue), signal bars (green 1–4), line/volte |
 | UART | 115200 8N1 |
 | Bootloader | DragonBluep U-Boot 2018.09 |
@@ -59,36 +60,47 @@ First-boot uci-defaults (run once, then self-delete):
 - `99-ux2000-network` — LAN `192.168.8.1/24`, enables **both** WiFi radios *and*
   AP interfaces (OpenWrt leaves them disabled on a config reset), sets default APN
 - `99-ux2000-mwan3` — `wan` = primary (metric 1), `wwan` = cellular backup (metric 2)
-- `99-ux2000-voice` — SLIC/FXS enable (legacy EC200A-era; harmless on RM500U)
+- `99-ux2000-voice` — SLIC/FXS enable (legacy EC200A-era; harmless if no voice module fitted)
 
 ## Cellular
 
-The RM500U-CNV is **MBIM-only** (usbnet modes 1/3/5/11/13/15; no QMI).
-It enumerates as `wwan0` (via `cdc_mbim`) + `/dev/cdc-wdm0`, with
-AT port on `/dev/ttyUSB2`.
+The UX2000 has a USB cellular slot. This image is **modem-agnostic**: it
+ships the kernel/modules and userspace tools to support a wide range of
+USB cellular modems, but deliberately **does not pin a specific card or
+ship a card-specific init script**. Drop in any compatible module
+(MBIM/QMI/NCM/CDC-ECM/RNDIS), and the builder wires up the `wwan`
+interface their own way.
+
+Packages included for cellular support:
+- **MBIM**: `libmbim`, `umbim`, `mbim-utils` (provides `mbimcli`),
+  `kmod-usb-net-cdc-mbim`, `kmod-usb-wdm`
+- **QMI / option**: `kmod-usb-serial-option`, `kmod-usb-serial-wwan`,
+  `kmod-usb-net`
+- **NCM / ECM**: `kmod-usb-net-cdc-ncm`, `kmod-usb-net-cdc-ether`,
+  `kmod-usb-net-huawei-cdc-ncm`
+- **AT port**: `chat` (for manual AT use if needed)
 
 > **This image does NOT ship an init script to auto-bring-up the modem.**
-> The `network.wwan` interface and a boot-time bring-up script are left to you.
-> Manual bring-up that is known to work on this unit:
->
-> ```sh
-> # 1) turn the RF on (MBIM radio-on fails on this unit; use AT+CFUN=1)
-> picocom -b 115200 /dev/ttyUSB2     # then: AT+CFUN=1
-> # 2) create the interface
-> uci set network.wwan=interface
-> uci set network.wwan.proto=mbim
-> uci set network.wwan.device=/dev/cdc-wdm0
-> uci set network.wwan.pdptype=ipv4v6
-> uci set network.wwan.apn=internet
-> uci set network.wwan.metric=20
-> uci commit network
-> # 3) (DITO is SA-only — NSA connect fails with PacketServiceDetached)
-> ifup wwan
-> ```
+> The `network.wwan` interface and any boot-time bring-up logic are left to
+> the builder — the exact sequence depends on the card fitted (radio-on
+> method, APN, SA/NSA, etc.). The `mwan3` config already treats `wwan` as the
+> cellular backup member, so once you define `network.wwan` with the right
+> proto it slots into failover automatically.
 
-AT commands are reserved for **manual** tuning only (NSA/SA mode, IMEI,
-band/tower lock) in picocom — they are intentionally **not** in any
-automated path.
+Example bring-up for a **generic MBIM** module (adapt to your card):
+```sh
+uci set network.wwan=interface
+uci set network.wwan.proto=mbim
+uci set network.wwan.device=/dev/cdc-wdm0
+uci set network.wwan.pdptype=ipv4v6
+uci set network.wwan.apn=internet      # set your carrier APN
+uci set network.wwan.metric=20
+uci commit network
+ifup wwan
+```
+
+AT commands (IMEI, band/tower lock, mode) are for **manual** tuning only
+in picocom — keep them out of any automated path.
 
 ## Repository layout
 
