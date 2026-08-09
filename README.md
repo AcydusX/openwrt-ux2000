@@ -5,6 +5,15 @@ Custom OpenWrt build for the **FiberHome UX2000** — a MT7621A-based indoor
 definition, firmware meta-package, and first-boot uci-defaults) that turns a
 stock OpenWrt 25.12 source tree into a flashable UX2000 image.
 
+> ⚠️ **BACK UP YOUR FLASH FIRST — before you flash anything.**
+> Dump the **entire** SPI-NOR (all MTD partitions) from the stock firmware
+> *before* you touch it. Wiping a partition you can't recreate (especially
+> `u-boot` or `factory`) can **permanently brick** the unit. This project
+> learned that the hard way: the stock `u-boot` MTD was wiped during
+> development, which is why this image requires the DragonBluep U-Boot
+> (see [Flashing](#flashing) and [`bootloader/`](bootloader/README.md)).
+> A full flash dump is your only recovery if something goes wrong.
+
 > Status: builds and flashes. LAN + WiFi (MT7615 DBDC) + LuCI + multi-WAN
 > (mwan3) are working. The cellular **data interface bring-up is not
 > automated** in this image (module-agnostic by design) — see
@@ -210,6 +219,26 @@ cd /path/to/openwrt
 > [`bootloader/`](bootloader/README.md) for the recovery/build artifacts).
 > Only flash if you know your unit's bootloader state and have a UART/SPI
 > recovery path.
+
+### Step 0 — Back up the whole flash (do this first, once)
+
+From a running OpenWrt on the unit (or via the bootloader's recovery shell),
+dump every MTD partition to a safe place **before** flashing:
+
+```sh
+# on the router
+mkdir -p /tmp/backup
+for p in $(cat /proc/mtd | awk -F: 'NR>1{print $1}'); do
+  mtddump /dev/$p /tmp/backup/$p.bin 2>/dev/null || \
+  cat /dev/$p > /tmp/backup/$p.bin
+done
+# pull them off:
+scp -r root@192.168.8.1:/tmp/backup ./ux2000-stock-backup-$(date +%Y%m%d)
+```
+
+At minimum, save **`u-boot`** (`/dev/mtd0`) and **`factory`** (`/dev/mtdX`,
+holds MAC + WiFi calibration) — those cannot be regenerated and are what
+make the device recoverable. Keep the backup off the device.
 
 Via running OpenWrt (sysupgrade, **no settings kept** — the `-n` matters
 because the WiFi/network uci-defaults only run on a clean flash):
